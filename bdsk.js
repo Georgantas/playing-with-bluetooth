@@ -60,7 +60,7 @@ bleno.on('advertisingStart', function (error) {
 							// application logic for handling WRITE or WRITE_WITHOUT_RESPONSE on characteristic Link Loss Alert Level goes here
 							link_loss_alert_level = octets[0];
 							var led = getLed(link_loss_alert_level);
-                            allLedsOff();
+                            				allLedsOff();
 							startFlashing(led, 250, 4);
 							callback(this.RESULT_SUCCESS);
 						}
@@ -131,7 +131,7 @@ bleno.on('advertisingStart', function (error) {
 								console.log("Proximity Sharing OFF");
 							} else {
 								var proximity_led = getLed(proximity_band - 1);
-								proximity_led.writeSync(1);
+								//proximity_led.writeSync(1);
 								console.log("Client RSSI: " + client_rssi);
 							}
 							callback(this.RESULT_SUCCESS);
@@ -190,73 +190,33 @@ bleno.on('disconnect', function (clientAddress) {
 });
 
 function startFlashing(led, interval, times) {
-	flash_count = times * 2;
-	active_leds.push(led);
-	alert_timer = setInterval(flash_leds, interval);
-	flashing = 1;
+	console.log("start flashing called, args:", led, interval, times);
+}
+
+function getLed() {
+	console.log("getLed() called.");
+	return 1;
 }
 
 function flash_leds() {
-	for (var i = 0; i < active_leds.length; i++) {
-		active_leds[i].writeSync(flash_state);
-	}
-	if (flash_state == 1) {
-		flash_state = 0;
-	} else {
-		flash_state = 1;
-	}
-	flash_count--;
-	if (flash_count == 0 && beeping == 0) {
-		clearInterval(alert_timer);
-		active_leds = [];
-	}
+	console.log("flash_leds() called.");
 }
 function allLedsOff() {
-	led1.writeSync(0);
-	led2.writeSync(0);
-	led3.writeSync(0);
+	console.log("allLedsOff() called.");
 }
-
 function beepOff() {
-    beeping = 0;
-    buzzer.writeSync(0);
+	console.log("beepOff() called.");
 }
 
 function beep() {
-	buzzer.writeSync(beep_state);
-	if (beep_state == 1) {
-		beep_state = 0;
-	} else {
-		beep_state = 1;
-	}
-	beep_count--;
-	if (beep_count == 0) {
-        beep_state = 0;
-        buzzer.writeSync(beep_state);
-		beeping = 0;
-		clearInterval(alert_timer);
-		active_leds = [];
-	}
+	console.log("beep() called.");
 }
 
 function startBeepingAndflashingAll(interval, alert_level) {
-	if (alert_level > 0) {
-		beep_count = flash_count;
-		beeping = 1;
-	} else {
-		beeping = 0;
-	}
-	active_leds.push(led1);
-	active_leds.push(led2);
-	active_leds.push(led3);
-	flashing = 1;
-	alert_timer = setInterval(beepAndFlashAll, interval);
+	console.log("startBeepingAndflashingAll() called, args:", interval, alert_level);
 }
 function beepAndFlashAll() {
-	flash_leds();
-	if (beeping == 1) {
-		beep();
-	}
+	console.log("beepAndFlashAll() called.");
 }
 
 function u8AToHexString(u8a) {
@@ -272,15 +232,6 @@ function u8AToHexString(u8a) {
 		hex = hex + hex_pair;
 	}
 	return hex.toUpperCase();
-}
-
-function getLed(level) {
-	switch (level) {
-		case 0: return led1;
-		case 1: return led2;
-		case 2: return led3;
-		default: return led1;
-	}
 }
 
 function simulateTemperatureSensor(updateValueCallback) {
@@ -301,35 +252,5 @@ function simulateTemperatureSensor(updateValueCallback) {
 	}, 1000);
 }
 
-function sampleTemperatureSensor(updateValueCallback) {
-	var tempSensor = mcpadc.open(0, { speedHz: 1200000 }, function (err) {
-		if (err) throw err;
-		temperature_timer = setInterval(function () {
-			// sensor provides a voltage output that is linearly proportional to the Celsius (centigrade) temperature.
-			// TMP36 characteristics: 500mV offset, Scaling 10mV per degree C. 
-			// Example: 750mV = 25 degrees C
-			//  750mV - 500mV = 250mV
-			//  250mV / 10 = 25 degrees C 
-			//
-			// sensor value is in the range 0-1 and represents a fraction of the reference voltage
-			// in our circuit the reference voltage is 3300mV
-			//
-			// with a multimeter I measured only 1600mV at the 3.3V pin so made adjustments accordingly
-			tempSensor.read(function (err, reading) {
-				if (err) throw err;
-				celsius = ((reading.value * 3300) - 500) / 10;
-				console.log("temperature: " + celsius + "C");
-				celsius_times_10 = celsius * 10;
-				var value = [0, 0, 0, 0, 0];
-				value[4] = 0xFF; // exponent of -1
-				value[3] = (celsius_times_10 >> 16);
-				value[2] = (celsius_times_10 >> 8) & 0xFF;
-				value[1] = celsius_times_10 & 0xFF;
-				var buf = Buffer.from(value);
-				updateValueCallback(buf);
-			});
-		}, 1000);
-	});
-}
 
 
