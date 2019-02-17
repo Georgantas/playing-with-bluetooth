@@ -20,6 +20,10 @@ bleno.on('stateChange', function (state) {
 	console.log('on -> stateChange: ' + state);
 
 	if (state === 'poweredOn') {
+		// 1803 is the UUID for the link loss service
+		// found at: https://www.bluetooth.com/specifications/gatt/services
+		// This service defines behavior when a link is lost between two devices.
+		// unclear why we're using it's UUID here, and not later in the 'advertisingStart' callback
 		bleno.startAdvertising('BDSK', ['1803']);
 	} else {
 		bleno.stopAdvertising();
@@ -35,7 +39,7 @@ bleno.on('advertisingStart', function (error) {
 			new bleno.PrimaryService({
 				uuid: '1803',
 				characteristics: [
-					// Alert Level
+					// Alert Level: https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.characteristic.alert_level.xml
 					new bleno.Characteristic({
 						value: 0,
 						uuid: '2A06',
